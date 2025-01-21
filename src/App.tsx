@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { PointerEvent, useEffect, useRef, useState } from 'react';
 
 import getStroke from 'perfect-freehand';
 import { getSvgPathFromStroke } from './utils';
@@ -21,43 +21,43 @@ const options = {
   },
 };
 
-const dpi = 3;
+const scalingFactor = 3;
 
 function App() {
   const [points, setPoints] = useState<[number, number, number][]>([]);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  function handlePointerDown(e) {
-    e.target.setPointerCapture(e.pointerId);
-    setPoints([[e.pageX * dpi, e.pageY * dpi, e.pressure]]);
-  }
+  const handlePointerDown = (e: PointerEvent<HTMLCanvasElement>) => {
+    if (e.target instanceof HTMLCanvasElement) {
+      e.target.setPointerCapture(e.pointerId);
+    }
+    setPoints([[e.pageX * scalingFactor, e.pageY * scalingFactor, e.pressure]]);
+  };
 
-  function handlePointerMove(e) {
+  const handlePointerMove = (e: PointerEvent<HTMLCanvasElement>) => {
     if (e.buttons !== 1) return;
-    setPoints([...points, [e.pageX * dpi, e.pageY * dpi, e.pressure]]);
-  }
+    setPoints([
+      ...points,
+      [e.pageX * scalingFactor, e.pageY * scalingFactor, e.pressure],
+    ]);
+  };
 
-  const stroke = getStroke(points, options);
-  const pathData = getSvgPathFromStroke(stroke);
-  const myPath = new Path2D(pathData);
-  const ctx = canvasRef.current?.getContext('2d');
+  useEffect(() => {
+    const stroke = getStroke(points, options);
+    const pathData = getSvgPathFromStroke(stroke);
+    const myPath = new Path2D(pathData);
+    const ctx = canvasRef.current?.getContext('2d');
 
-  ctx?.fill(myPath);
-  // useEffect(() => {
-  //   const myPath = new Path2D(pathData);
-  //   console.log('mypath', myPath);
-  //   if (canvasRef.current) {
-  //     canvasRef.current.fill(myPath);
-  //   }
-  // }, [pathData]);
+    ctx?.fill(myPath);
+  });
 
   return (
     <canvas
       ref={canvasRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
-      width={800 * dpi}
-      height={800 * dpi}
+      width={800 * scalingFactor}
+      height={800 * scalingFactor}
       style={{ touchAction: 'none', width: '800px', height: '800px' }}
     ></canvas>
   );
